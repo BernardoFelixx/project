@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+          
+<!-- Load d3.js -->
+<head>
+<script
+  src="https://code.jquery.com/jquery-3.6.0.js"
+  integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+  crossorigin="anonymous"></script>
+
+  <script
+  src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
+  integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30="
+  crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+<style>
+ul{
+  text-align: center;
+  position:absolute;
+  list-style:none;
+  max-height:500px;
+  width: 145px;
+  margin:0;
+  overflow:auto;
+  padding:0;
+  text-indent:10px;
+  top: 100px;
+  left: 660px;  
+  border: 1px solid black;
+  border-radius: 10px;
+
+}
+li{
+  line-height:25px;
+}
+#country_search_container{
+  margin-top: 10px;
+  margin-left: 0px;
+  display: none;
+}
+
+
+#country_search_box{
+  width:120px;
+}
+
+
+#country_search_button{
+  margin-top:4px;
+}
+
+#legend {
+		width: 500px;
+		position: absolute;
+		left: 10px;
+		top: 555px;
+	}
+<!--li.key {
+            float: left;
+            border-top-width: 15px;
+            border-top-style: solid;
+            font-family: "Oxygen";
+            color: #666;
+            font-size: 16px;
+            width: 10%;
+            padding-left: 0;
+            padding-right: 0;
+            list-style:none;
+        }
+-->
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 170px;
+  height: 40px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+
+#optionsX {
+    width: 100px;
+    height: 30px;
+		position: absolute;
+		left: 1270px;
+		top: 675px;
+	}
+
+#optionsY {
+  width: 100px;
+  height: 30px;
+  position: absolute;
+  left: 850px;
+  top: 45px;
+}
+
+#buttons_countries {
+  position: absolute;
+  left: 650px;
+  top: 60px;
+}
+
+#buttons_category {
+  position: absolute;
+  width: 420px;
+  left: 1420px;
+  top: 660px;
+  border:1px solid #000000;
+}
+
+
+text {
+           font-family: Helvetica;
+           fill: #000000;
+     }
+
+
+.brushed {
+    fill: red;
+}
+
+.non_brushed {
+    fill: steelblue;
+}
+
+
+
+
+
+
+
+</style>
+</head>
+<body>
+<div id="buttons_category">
+			<button onclick="dataChange('Criminality')" style="background-color: #de2d26; margin: 10px; height:100px; width: 400px; border-radius: 10px; font-size: 25px; ">Criminality</button>
+			<button onclick="dataChange('Education')" style="background-color: #3182bd; margin: 10px; height:100px; width: 400px; border-radius: 10px; font-size: 25px;">Education</button>
+			<button onclick="dataChange('Income')" style="background-color: #31a354; margin: 10px; height:100px; width: 400px; border-radius: 10px; font-size: 25px;">Income</button>
+		</div>
+<div id="buttons_countries" style="width: 100%">
+			<button onclick="change_country_list('Select all')" style="margin: 10px;" >Select all</button>
+			<button onclick="change_country_list('Reset')">Reset</button>
+		</div>
+<div id="ocupy_space" style="width: 100%;height: 50px;">
+</div>
+
+<div id="geo_map_legend" style="float: left;"></div>
+</body>
+
+<script src="https://d3js.org/d3.v6.js"></script>
+
+
+<!-- Create an element where the map will take place -->
+<svg id="geo_map" width="800" height="600" style="margin: 10px; float: left; border: 1px solid black; border-radius: 10px;"></svg>
+<!--<div id='gene_search_container' class='row'>
+        <input id='country_search_box' type="text" class="form-control" placeholder="Input Country" aria-describedby="sizing-addon2">
+        
+</div>-->
+<div id="legend"></div>
+<div id="scatterPlot" width="550" height="600" style="margin: 10px; float:left; border: 1px solid black; border-radius: 10px; "></svg></div>
+<div id="lineChart" width="550" height="600" style="margin: 10px; float:left; border: 1px solid black; border-radius: 10px;"></svg></div>
+<div id="barChart" width="550" height="600" style="margin: 10px; float:left; border: 1px solid black; border-radius: 10px;"></svg></div>
+<div id="body">
+  <div id="radarChart" style="margin: 10px; float:left; border: 1px solid black; border-radius: 10px;"></div>
+</div>
+
+<!--<h2>Timeline</h2>
+<div class="row align-items-center">
+  <div class="col-sm-2"><p id="value-range"></p></div>-->
+  <div class="col-sm"><div id="slider-range"></div></div>
+<!--</div>-->
+
+
+<select id = "optionsX" >
+  <option value="Criminality";>Criminality</option>
+  <option value="Education" selected>Education</option>
+  <option value="Income">Income</option>
+  <option value="Time">Time</option>
+</select>
+<select id = "optionsY" >
+  <option value="Criminality";>Criminality</option>
+  <option value="Education">Education</option>
+  <option value="Income">Income</option>
+</select>
+<ul id="list">
+  <li>
+  </li>
+</ul>
+
+
+<script>
+$(function() {
+    $('li').css('cursor', 'pointer')
+
+    .click(function() {
+        window.location = $('a', this).attr('href');
+        return false;
+    });
+});
+  
+
+d3.select('#optionsX').on('change', function(){
+  axisChangeX(d3.select(this).property('value'));
+})
+
+d3.select('#optionsY').on('change', function(){
+  axisChangeY(d3.select(this).property('value'));
+})
+
+
+var legend_items=["0", "100", "500", "1000", "3500","6000"]
+
+var points= []
+var years = [2012,2013,2014,2015,2016,2017]
+
+
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+const svg = d3.select("svg")
+  //width = +svg.attr("width"),
+  //height = +svg.attr("height");
+
+width = 800
+height = 600
+
+// Map and projection
+const path = d3.geoPath();
+const projection = d3.geoMercator()
+  .scale(500)
+  .center([20,50])
+  .translate([width / 2, height / 2]);
+
+const projection2 = d3.geoMercator()
+.scale(height*0.8)
+.center([10,55])
+  .translate([width / 2, height / 2]);
+
+
+
+
+var domain = []
+
+
+
+const data = new Map();
+/*var colorScale = d3.scaleThreshold()
+  .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
+  .range(d3.schemeReds[5]);*/
+
+
+
+var node_list=[]
+
+var country_list = [];
+var radius = 5;
+
+
+
+  
+var category = "Criminality"  //Criminality
+var X_axis = "Education"   //Criminality
+var Y_axis = "Criminality"
+
+
+
+var legend=null;
+var circles;
+var brush;
+
+
+/*Promise.all([d3.json("https://raw.githubusercontent.com/BernardoFelixx/project/main/names.json")
+,d3.csv("https://raw.githubusercontent.com/BernardoFelixx/project/main/qql.csv")]).then(function([map,data]) {
+	topology=map;
+	dataset=data;
+	gen_geo_map(false);
+	createScatterPlot(false);
+  //createLineChart(false);
+});*/
+
+
+Promise.all([d3.json("https://raw.githubusercontent.com/BernardoFelixx/project/main/names.json")
+,d3.csv("index_final2.csv")]).then(function([map,data]) {
+	topology=map;
+	dataset=data;
+  //getDomain();
+	gen_geo_map(false);
+	createScatterPlot(false);
+  createBarChart(false);
+  genRadarChart();
+  genRadialLineChart();
+  //createLineChart(false);
+  //addZoom()
+});
+
+
+
+function getDomain(){
+    for (var i = 0; i < dataset.length; i++) {
+        if(category == "Criminality") domain.push(parseFloat(dataset[i].Criminality));
+        if(category == "Education") domain.push(parseFloat(dataset[i].Education));
+        if(category == "Income") domain.push(parseFloat(dataset[i].Income));
+    }
+    return domain;
+  }
+
+
+
+var colorScale = d3.scaleQuantile()
+  //.domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
+  .domain([0, 100, 500, 1000, 3500])
+  //.domain(domain)
+  .range(d3.schemeReds[5]); 
+
+
+
+
+
+ function add_list(country_name){
+
+ var el = document.getElementById("list");
+  var node = document.createElement("li");
+  
+ for(i=0;i<node_list.length;i++){
+	if(country_name==node_list[i]){
+		node_list.splice(i,1);
+		el.removeChild(el.childNodes[i+3])
+		return;
+	}
+ }
+  node.innerText = country_name;
+  node_list.push(node.innerText)
+  el.appendChild(node);
+ }
+
+function fill_countries(){
+countries=[]
+	var x=0
+	for (x=0; x<topology.features.length; x++){
+    countries.push( topology.features[x].properties.name ); 
+	
+  };
+  return countries
+}
+
+function manage_search_box(countries){
+
+	$('#country_search_box').keyup(function(e) {
+    if (e.keyCode === 13) {
+      find_country();
+    }
+  });
+  $('#country_search_box').autocomplete({
+      source: countries
+    });
+	
+}
+function find_country(){
+	var search_country = $('#country_search_box').val();
+	
+	
+	mouseClick(null,null,search_country);
+	
+}
+
+
+function getVar(country_name, attribute) {
+    for (var i = 0; i < dataset.length; i++) {
+        if (dataset[i]["name"] == country_name) {
+            return dataset[i][attribute];
+        }
+    }
+    return 0;
+}
+
+function mouseOver(event,d) {
+    
+    tooltip.transition()
+         .duration(200)
+         .style("opacity", .9);
+       tooltip.html(d.properties.name+"<br/>" + category + ": " + getVar(d.properties.name, category))
+         .style("left", (event.pageX) + "px")
+         .style("top", (event.pageY - 28) + "px");
+    d3.selectAll(".Country")
+      .transition()
+      .duration(200)
+      .style("opacity", .5)
+    d3.select(this)
+      .transition()
+      //.duration(2)
+      .style("opacity", 1)
+      //.style("stroke", "black")
+	  
+	  
+	  
+	  
+	scatterPlot = d3.select("div#scatterPlot").select("svg");
+	scatterPlot
+    .selectAll("circle")
+    .filter(function (b) {
+      if(d.properties.name == b.name){
+        return b;
+      }
+    })
+    //.style("fill", "red")       //MODIFICADO
+    .attr("class", "brushed")
+	  
+	  lineChart = d3.select("div#lineChart").select("svg");
+	  lineChart
+    .select("g.lines")
+    .selectAll("path")
+    .filter(function (b) {
+      if(d.properties.name == b[0]){  //Ex: ['France', Array(6)] b[0] = France
+        return b;
+      }
+    })
+    .attr("stroke", "red")
+	  
+
+    radarChart = d3.select("div#radarChart").select("svg");
+	  radarChart
+    .selectAll("polygon")
+    .filter(function (b) {
+      if(d.properties.name){  //Ex: ['France', Array(6)] b[0] = France
+        
+        return b;
+      }
+    })
+    .attr("stroke", "red")
+    .style("fill-opacity", .7);
+
+
+  }
+
+  function mouseLeave(d) {
+  
+  tooltip.transition()
+         .duration(500)
+         .style("opacity", 0);
+    d3.selectAll(".Country")
+      .transition()
+      //.duration(2)
+      .style("opacity", 1)
+	  
+	  
+	  
+	  
+  d3.select("div#scatterPlot")
+  .select("svg")
+  .selectAll("circle")
+  //.style("fill", "steelblue")       MODIFICADO
+  .attr("class", "non_brushed")
+  
+
+  d3.select("div#lineChart")
+  .select("svg")
+  .select("g.lines")
+  .selectAll("path")
+  .attr("stroke", "steelblue")      
+  
+  }
+
+  function mouseClick(event,d,country) {
+
+/////////////////////////////////////////////////////////////////////
+////////////MUDAR__ este bloco so serve para a lista //////////////////////////////
+	
+	
+	if(country!=null){
+		var newData= country
+		if(country_list.includes(newData)){
+			country_list=country_list.filter(function(item){
+				return item!=newData
+			})
+		
+		}else{
+			country_list.push(newData);
+		}
+		
+		add_list(newData);
+		return;
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+	}
+	var newData= d.properties.name;
+		if(country_list.includes(newData)){
+			country_list=country_list.filter(function(item){
+				return item!=newData;
+			})
+			d3.selectAll(".Country")
+			  .transition()
+			  .duration(200)
+			  .style("opacity", .75)
+			d3.select(this)
+				  .transition()
+				  .duration(200)
+				  .style("opacity", 1)
+				  .style("stroke", "transparent")
+		}else{
+			d3.select(this)
+				  .transition()
+				  .duration(200)
+				  .style("opacity", 1)
+				  .style("stroke-width","2")
+				  .style("stroke", "black")
+				  
+				  
+				  
+			country_list.push(newData);
+	}
+	
+	add_list(newData);
+	createScatterPlot(true);
+  createBarChart(true);
+  createLineChart(true);
+  genRadialLineChart();
+  genRadarChart();
+  }
+  
+ 
+
+
+
+
+function does_legend1(){
+	d3.select('#legend')
+		.selectAll('ol')
+		.remove();
+
+	// build the map legend
+	var legend = d3.select('#legend')
+		.append('ol')
+		.attr('class', 'list-inline');
+
+	var keys = legend.selectAll('li.key')
+		.data(colorScale.range());
+
+	//var legend_items = ["Low", "", "", "", "High"];
+
+	keys.enter().append('li')
+		.attr('class', 'key')
+		.style('border-top-color', String)
+		.text(function (d, i) {
+			return legend_items[i];
+		});
+}
+
+function gen_geo_map2(){
+
+
+	svg.select("g")
+		.selectAll("path")
+		.attr("fill",(d) => { return colorScale(getVar(d.properties.name, category))})
+		
+		.on("mouseover", mouseOver )
+		.on("mouseleave", mouseLeave )
+		.on("click",mouseClick)
+		
+		does_legend1();
+
+}
+function gen_geo_map(){
+
+	var countries=fill_countries()
+
+	country=manage_search_box(countries)
+	
+
+	svg.append("g")
+		.selectAll("path")
+		.data(topology.features)
+		.enter()
+		.append("path")
+		.attr("d", d3.geoPath()
+		.projection(projection)
+		)
+		.attr("fill",(d) => { return colorScale(getVar(d.properties.name, category))})
+		.attr("class", function(d){ return "Country" } )
+		
+		.on("mouseover", mouseOver)
+		.on("mouseleave", mouseLeave )
+		.on("click",mouseClick)
+		
+		does_legend1();
+
+}
+
+function createScatterPlot(update){
+
+  width = 550
+  height = 600
+
+ new_dataset = dataset.filter((d) => {
+	if (country_list.includes(d.name)) return d
+  })
+
+  Y_axis = category;
+
+
+  help = []
+  help2 = []
+
+  for (i=0;i<new_dataset.length;i++){
+	  if(Y_axis == "Criminality")  help[i]=parseFloat((new_dataset[i].Criminality))     //Criminality
+    if(Y_axis == "Education") help[i]=parseFloat((new_dataset[i].Education))    //Education
+    if(Y_axis == "Income") help[i]=parseFloat((new_dataset[i].Income))    //Income
+
+    if(X_axis == "Criminality")  help2[i]=parseFloat((new_dataset[i].Criminality))     //Criminality
+    if(X_axis == "Education") help2[i]=parseFloat((new_dataset[i].Education))    //Education
+    if(X_axis == "Income") help2[i]=parseFloat((new_dataset[i].Income))    //Income
+  }
+
+  //update=false;
+  margin = { top: 20, right: 20, bottom: 20, left: 70 };
+  
+
+  if (help.length == 0) Y_max = 1
+  else{
+	  Y_max = d3.max(help)
+  }
+
+  if (help2.length == 0) X_max = 1
+  else{
+	  X_max = d3.max(help2)
+  }
+  
+
+
+  x = d3
+      .scaleLinear()
+      .domain([0, X_max])
+      .nice()
+      .range([margin.left, width - margin.right]);
+
+
+  y = d3
+      .scaleLinear()
+      .domain([0, Y_max])
+      .range([height - margin.bottom, margin.top]);
+
+
+
+  xAxis = (g) =>
+  g
+  .attr("transform",`translate(0,${height - margin.bottom})`)
+  .call(
+      d3.axisBottom(x)
+      .tickFormat((x) => x)
+      .ticks(5)
+  )
+    .call((g) => g.select(".domain").remove());
+
+
+
+  yAxis = (g) =>
+    g
+    .attr("transform",`translate(${margin.left}, 0)`)
+    .call(d3.axisLeft(y))
+    .call((g) => g.select(".domain").remove());
+  
+  grid = (g) =>
+    g
+    .attr("stroke", "currentColor")
+    .attr("stroke-opacity", 0.3)
+    .call((g) => 
+        g
+        .append("g")
+        .selectAll("line")
+        .data(x.ticks(5))
+        .join("line")
+        .attr("x1", (d) => 0.5 + x(d))          
+        .attr("x2", (d) => 0.5 + x(d))          
+        .attr("y1", margin.top)
+        .attr("y2", height - margin.bottom)
+    )
+    .call((g) => 
+        g
+        .append("g")
+        .selectAll("line")
+        .data(y.ticks())
+        .join("line")
+        .attr("y1", (d) => 0.5 + y(d))
+        .attr("y2", (d) => 0.5 + y(d))
+        .attr("x1", margin.left)
+        .attr("x2", width - margin.right)
+    );
+
+
+  brush = d3.brush()
+        .on("brush", highlightBrushedCircles)
+        .on("end", selectBrushedCircles); 
+
+
+  if(!update){
+    d3.select("div#scatterPlot")
+      .append("svg")
+      .append("g")
+      .attr("class", "circles")
+      .style("stroke-width", 1.5)
+      .style("fill","steelblue")
+  }
+
+
+
+
+  const svg = d3
+  .select("div#scatterPlot")
+  .select("svg")
+  .attr("width", width)
+  .attr("height",height);
+
+/*
+  // Add a clipPath: everything out of this area won't be drawn.
+  var clip = svg.append("defs").append("SVG:clipPath")
+      .attr("id", "clip")
+      .append("SVG:rect")
+      .attr("width", width )
+      .attr("height", height )
+      .attr("x", 0)
+      .attr("y", 0);
+
+  
+  svg.append("rect")
+  .attr("width", width)
+  .attr("height", height)
+  .style("fill", "none")
+  .style("pointer-events", "all")
+  .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+  .call(zoom);
+ */ 
+
+
+  
+  svg.append("g").call(brush);            //NOVO
+
+  var circles2 = svg.select("g.circles").selectAll("circle")
+
+  svg                         
+  .select("g.circles")
+  .selectAll("circle")
+  .data(new_dataset)
+  .join(
+    (enter) =>  {
+      return enter
+      .append("circle")
+      .attr("cx", (d) => x(getVar(d.name, X_axis)))
+      .attr("cy", (d,i) => y(getVar(d.name, Y_axis)))
+      .attr("r", radius)
+      .attr("class", "non_brushed")                           //NOVO
+      .on("mouseover", handleMouseOver)
+      .on("mouseleave", handleMouseLeave)
+      //.on("click", handleClick);
+    },
+    (update) => {
+      update
+      .merge(circles2)
+      .transition()
+      .duration(750)
+      .attr("cx", (d) => x(getVar(d.name, X_axis)))              
+      .attr("cy", (d,i) => y(getVar(d.name, Y_axis)))          
+      .attr("r", radius)
+      .attr("class", "non_brushed")                             //NOVO
+    },
+      (exit) => {
+        return exit.remove();
+      }
+  );
+  
+  circles = svg.select("g.circles").selectAll("circle")
+  
+  if(!update){
+    svg.append("g").attr("class", "scatterXAxis");
+    svg.append("g").attr("class", "scatterYAxis");
+    svg.append("g").attr("class", "scatterGrid").call(grid);
+  }
+
+  d3.select("g.scatterXAxis").call(xAxis);
+  d3.select("g.scatterYAxis").call(yAxis);
+
+
+
+  d3.select("g.scatterXAxis").selectAll("text").filter(function(){    //Remove the axis labels
+    return /[a-zA-Z]+/.test(d3.select(this).text());                  //Only removes actual text, before it was deleting the numbers in the axis
+  }).remove();
+  d3.select("g.scatterYAxis").selectAll("text").filter(function(){
+    return /[a-zA-Z]+/.test(d3.select(this).text());
+  }).remove();
+
+  
+  d3.select("g.scatterXAxis")
+    .append("text")
+    .attr("font-weight", "600")       //Text in Bold
+    .attr("font-size", "14px")  
+    .attr("transform", "translate(490, 20)")
+    .text(X_axis);
+
+  d3.select("g.scatterYAxis")
+    .append("text")
+    .attr("font-weight", "600")       //Text in Bold
+    .attr("font-size", "14px")  
+    .attr("transform", "rotate(-90) translate(-30, -40)")
+    .text(Y_axis);      
+  
+
+
+
+
+}
+
+
+function createLineChart(update){
+  
+ 
+
+  margin = { top: 20, right: 20, bottom: 20, left: 70 };
+
+  Y_axis = category
+  var cat;
+  if(category == "Criminality") cat = "CR"
+  if(category == "Education") cat = "EI"
+  if(category == "Income")  cat = "II"
+
+  new_dataset = dataset.filter((d) => {
+	if (country_list.includes(d.name)) return d
+  })
+
+
+
+points=[]
+years=[]
+  //
+  min = sliderRange.value()[0]
+  max = sliderRange.value()[1]
+  years.push(min)
+  while (min < max){
+    min++
+    years.push(min)
+  }
+  console.log(years)
+
+
+  
+
+
+  
+  Y_max = 1
+
+
+  for (i=0;i<new_dataset.length;i++){
+    //if(i != 0) points.push([])
+	  for(k=0;k<years.length;k++){
+      var column = years[k].toString() + cat
+      //points[i].push({xpoint: years[k], ypoint: getVar(new_dataset[i].name, new_dataset[i].column)})
+      var y = parseFloat(new_dataset[i][column])
+      points.push({name: new_dataset[i]["name"],xpoint: years[k], ypoint: y})
+      if (y > Y_max) Y_max = y;
+      
+    }
+
+
+  }
+
+  /*if (points.length == 0) Y_max = 1
+  else{
+	  Y_max = d3.max(help)
+  }*/
+  
+  if(category == "Criminality") Y_max = Y_max*1.25
+  if(category == "Education") Y_max = 1
+  if(category == "Income") Y_max = 1
+
+
+  
+
+  
+  var points = d3.group(points, function(p) {  return p.name})  
+  
+    
+  x = d3
+    .scaleLinear()
+    //.domain(d3.extent(data, (d) => d.year))
+    .domain(sliderRange.value())                         //MODIFICAR
+    .range([margin.left, width - margin.right]);
+
+
+  y = d3
+      .scaleLinear()
+      .domain([0.7, Y_max])
+      .range([height - margin.bottom, margin.top]);
+
+  //update = false;
+
+  xAxis = (g) =>
+    g
+    .attr("transform",`translate(0,${height - margin.bottom})`).call(
+      d3
+      .axisBottom(x)
+      .tickFormat((x) => x)
+      .ticks(years.length)
+      .tickSizeOuter(0)
+    );
+
+  yAxis = (g) =>
+    g
+    .attr("transform",`translate(${margin.left}, 0)`)
+    .call(d3.axisLeft(y))
+    .call((g) => g.select(".domain").remove());
+
+
+  if(!update){
+    d3.select("div#lineChart")
+    .append("svg")
+    .append("g")
+    .attr("class", "lines")         //MODIFICADO
+    .attr("fill", "none")
+    .attr("stroke", "steelblue")
+    .attr("stroke-width", 1.5)      
+    //.append("path")
+  }
+
+    
+  const svg = d3
+  .select("div#lineChart")
+  .select("svg")
+  .attr("width", width)
+  .attr("height",height);
+
+  if(!update){
+    svg.append("g").attr("class", "lineXAxis");
+    svg.append("g").attr("class", "lineYAxis");
+  }
+
+  svg.select("g.lineXAxis").call(xAxis);
+
+  svg.select("g.lineYAxis").call(yAxis);
+
+
+
+
+  d3.select("g.lineYAxis").selectAll("text").filter(function(){    //Remove the axis labels
+    return /[a-zA-Z]+/.test(d3.select(this).text());                  //Only removes actual text, before it was deleting the numbers in the axis
+  }).remove();
+  
+
+
+  d3.select("g.lineYAxis")
+    .append("text")
+    .attr("font-weight", "600")       //Text in Bold
+    .attr("font-size", "12px")  
+    .attr("transform", "rotate(-90) translate(-30, 15)")
+    .text(Y_axis);      
+
+  //if(!update){
+    d3.select("g.lineXAxis")
+    .append("text")
+    .attr("font-weight", "600")       //Text in Bold
+    .attr("font-size", "12px")  
+    .attr("transform", "translate(730, -10)")
+    .text("Years"); 
+  //}
+
+ /* svg
+  .append("path")             //MODIFICADO    append >>> select
+  .datum(points)    
+  .attr("fill", "none")
+  .attr("stroke", "steelblue")
+  .attr("stroke-width", 1.5)
+  .attr("stroke-linejoin", "round")
+  .attr("stroke-linecap", "round")
+  .attr("d",line);*/
+
+  var lines = svg.select("g.lines").selectAll("path")
+
+  svg
+    .select("g.lines")
+    .selectAll("path")
+    //.append("g")
+    //.attr("class", "line")
+    .data(points)
+    .join(
+      (enter) =>  {
+        return enter
+        .append("path")
+        //.attr("fill", "none")
+        //.attr("stroke", function(d){ return color(d.key) })
+        //.attr("stroke", "steelblue")
+        //.attr("stroke-width", 1.5)
+        .attr("d", function(d){
+          return d3.line()
+            .x(function(d) { return x(d.xpoint); })
+            .y(function(d) { return y(d.ypoint); })
+            (d[1])    //d.values
+        })
+      },
+      (update) => {
+        update
+        .merge(lines)
+        .transition()
+        .duration(750)
+        //.attr("fill", "none")
+        //.attr("stroke", function(d){ return color(d.key) })
+        //.attr("stroke", "steelblue")
+        //.attr("stroke-width", 1.5)
+        .attr("d", function(d){
+          return d3.line()
+            .x(function(d) { return x(d.xpoint); })
+            .y(function(d) { return y(d.ypoint); })
+            (d[1])
+        })
+      },
+      (exit) => {
+        return exit.remove();
+      }
+
+    );
+
+
+
+  /*svg
+  .select("g.line")
+  .selectAll("circle")
+  .data(new_dataset)
+  .join(
+    (enter) =>  {
+      return enter
+      .append("circle")
+      .attr("cx", 2020)                             //MODIFICAR
+      .attr("cy", (d,i) => y(getVar(d.name,Y_axis)))
+      .attr("r", 3)
+      .on("mouseover", mouseOver)
+      .on("mouseleave", mouseLeave)
+      //.on("click", handleClick);
+    },
+    (update) => {
+      update
+      //.attr("cx", (d) => x(d.year))
+      .attr("cx", 2020)                             //MODIFICAR
+      .attr("cy", (d,i) => y(getVar(d.name,Y_axis)))
+      .attr("r", 3)
+    },
+      (exit) => {
+        return exit.remove();
+      }
+  );
+  */
+
+}
+
+
+function createBarChart(update){
+
+  margin = { top: 20, right: 20, bottom: 50, left: 50 };
+
+  width = 550
+  height = 600
+
+  Y_axis = category;
+
+  help = []
+
+  new_dataset = dataset.filter((d) => {
+	if (country_list.includes(d.name)) return d
+  })
+
+  new_dataset.sort(function(a, b){
+    if(Y_axis == "Criminality") return b.Criminality - a.Criminality
+    if(Y_axis == "Education") return b.Education - a.Education
+    if(Y_axis == "Income") return b.Income - a.Income
+  })
+
+  
+  for (i=0;i<new_dataset.length;i++){
+	  if(Y_axis == "Criminality")  help[i]=parseFloat((new_dataset[i].Criminality))     //Criminality
+    if(Y_axis == "Education") help[i]=parseFloat((new_dataset[i].Education))    //Education
+    if(Y_axis == "Income") help[i]=parseFloat((new_dataset[i].Income))
+
+  }
+
+  if (help.length == 0) Y_max = 1
+  else{
+	  Y_max = d3.max(help)*1.10
+  }
+
+  x = d3
+        .scaleBand()
+        .domain(new_dataset.map( function(d) {return d.name}))
+        .padding(0.2)
+        .range([margin.left, width - margin.right]);
+
+
+  y = d3
+      .scaleLinear()
+      .domain([0,Y_max])
+      .range([height - margin.bottom, margin.bottom]);
+
+
+
+  function xAxis(g) {
+      g.attr("transform",`translate(0,${height-margin.bottom})`).call(d3.axisBottom(x))
+      .selectAll("text")
+      //.attr("transform", "rotate(-90)")
+    
+    }
+
+  function yAxis(g) {
+      g.attr("transform", `translate(${margin.left},0)`).call(
+      d3
+      .axisLeft(y)
+      .tickFormat((i) => i)
+      .tickSizeOuter(0)
+    );
+  }
+
+  if (!update){
+    d3.select("div#barChart")
+      .append("svg")
+      .append("g")
+      .attr("class", "bars")
+      //.attr("fill", "red");
+  }
+
+
+  const svg = d3
+              .select("div#barChart")
+              .select("svg")
+              .attr("width", width)
+              .attr("height",height);
+
+  if(Y_axis == "Criminality") svg.select("g.bars").attr("fill", "#de2d26");
+  if(Y_axis == "Education") svg.select("g.bars").attr("fill", "#3182bd");
+  if(Y_axis == "Income") svg.select("g.bars").attr("fill", "#31a354");
+
+
+  var bars = svg.select("g.bars").selectAll("rect")
+
+  svg
+    .select("g.bars")
+    .selectAll("rect")
+    .data(new_dataset)
+      .join(
+        (enter) =>  {
+          return enter
+          .append("rect")
+          .attr("x", function (d){ return x(d.name);})
+          .attr("y", function (d){ return y(getVar(d.name, Y_axis));})
+          //.attr("width", (d) => x(d.rating) -x(0))
+          .attr("width", x.bandwidth())
+          .attr("height", function(d) { return (height - margin.bottom) - y(getVar(d.name, Y_axis)); })
+          .on("mouseover", handleMouseOverBarChart)
+          .on("mouseleave", handleMouseLeave);
+        },
+        (update) => {
+          update
+          .merge(bars)
+          .transition()
+          .duration(750)
+          .attr("x", function (d){ return x(d.name);})
+          .attr("y", function (d){ return y(getVar(d.name, Y_axis));})
+          .attr("width", x.bandwidth())
+          .attr("height", function(d) { return (height - margin.bottom) - y(getVar(d.name, Y_axis)); })
+        },
+          (exit) => {
+            return exit.remove();
+          }
+      )
+    
+      if(!update) {
+        svg.append("g").attr("class", "xAxis")
+        svg.append("g").attr("class", "yAxis")
+      }
+    
+    
+  d3.select("g.xAxis").call(xAxis);
+  d3.select("g.yAxis").call(yAxis);
+
+
+
+}
+
+
+
+
+
+
+
+function radar_data(){
+  
+  
+  var obj_aux1 = new Object();
+  var obj_aux2= new Object();
+  var obj_aux3 = new Object();
+  var obj= []
+  var obj_aux=[]
+  var value_aux1=0
+  var value_aux2=0
+  var value_aux3=0
+  new_dataset = dataset.filter((d) => {
+	if (country_list.includes(d.name)) return d
+  })
+
+  if(new_dataset.length>5){
+    for(i=0;i<new_dataset.length;i++){
+
+      value_aux1+=parseFloat(new_dataset[i]["Criminality"])
+      value_aux2+=parseFloat(new_dataset[i]["Income"])
+      value_aux3+=parseFloat(new_dataset[i]["Education"])
+
+    }
+
+      obj_aux.push({axis:'Criminality',value:value_aux1/new_dataset.length})
+      obj_aux.push({axis:'Income',value:value_aux2/new_dataset.length})
+      obj_aux.push({axis:'Education',value:value_aux3/new_dataset.length})
+
+      obj.push(obj_aux)
+      obj_aux=[]
+
+      return obj;
+      
+
+  }else{
+    for(i=0;i<new_dataset.length;i++){
+
+      value_aux1=parseFloat(new_dataset[i]["Criminality"])
+      value_aux2=parseFloat(new_dataset[i]["Income"])
+      value_aux3=parseFloat(new_dataset[i]["Education"])
+
+
+      obj_aux.push({axis:'Criminality',value:value_aux1})
+      obj_aux.push({axis:'Income',value:value_aux2})
+      obj_aux.push({axis:'Education',value:value_aux3})
+
+      obj.push(obj_aux)
+      obj_aux=[]
+
+      }
+
+      return obj;
+  }
+  
+  
+  
+    
+  
+}
+function RadarChart(id,d,options){
+  var cfg = {
+	 radius: 5,
+	 w: 600,
+	 h: 600,
+	 factor: 1,
+	 factorLegend: .85,
+	 levels: 3,
+	 maxValue: 0,
+	 radians: 2 * Math.PI,
+	 opacityArea: 0.05,
+	 ToRight: 5,
+	 TranslateX: 80,
+	 TranslateY: 30,
+	 ExtraWidthX: 100,
+	 ExtraWidthY: 100,
+	 color: d3.scaleOrdinal(d3.schemeCategory10)
+
+	};
+	
+	if('undefined' !== typeof options){
+	  for(var i in options){
+		if('undefined' !== typeof options[i]){
+		  cfg[i] = options[i];
+		}
+	  }
+	}
+	//cfg.maxValue = Math.max(cfg.maxValue, d3.max(d, function(i){return d3.max(i.map(function(o){return o.value;}))}));
+  cfg.maxValue=1
+  
+  if(d.length==0){
+    allAxis=['Criminality','Income','Education']
+  }else{
+    var allAxis = (d[0].map(function(i, j){return i.axis}));
+  }
+  
+	var total = allAxis.length;
+	var radius = cfg.factor*Math.min(cfg.w/2, cfg.h/2);
+	var Format = d3.format('f');
+	d3.select(id).select("svg").remove();
+	
+	var g = d3.select(id)
+			.append("svg")
+			.attr("width", cfg.w+cfg.ExtraWidthX)
+			.attr("height", cfg.h+cfg.ExtraWidthY)
+			.append("g")
+			.attr("transform", "translate(" + cfg.TranslateX + "," + cfg.TranslateY + ")");
+			;
+
+	var tooltip;
+	
+	//Circular segments
+	for(var j=0; j<cfg.levels-1; j++){
+	  var levelFactor = cfg.factor*radius*((j+1)/cfg.levels);
+	  g.selectAll(".levels")
+	   .data(allAxis)
+	   .enter()
+	   .append("svg:line")
+	   .attr("x1", function(d, i){return levelFactor*(1-cfg.factor*Math.sin(i*cfg.radians/total));})
+	   .attr("y1", function(d, i){return levelFactor*(1-cfg.factor*Math.cos(i*cfg.radians/total));})
+	   .attr("x2", function(d, i){return levelFactor*(1-cfg.factor*Math.sin((i+1)*cfg.radians/total));})
+	   .attr("y2", function(d, i){return levelFactor*(1-cfg.factor*Math.cos((i+1)*cfg.radians/total));})
+	   .attr("class", "line")
+	   .style("stroke", "grey")
+	   .style("stroke-opacity", "0.75")
+	   .style("stroke-width", "0.3px")
+	   .attr("transform", "translate(" + (cfg.w/2-levelFactor) + ", " + (cfg.h/2-levelFactor) + ")");
+	}
+
+	//Text indicating at what % each level is
+  
+	for(var j=0; j<cfg.levels; j++){    //Top Axis
+	  var levelFactor = cfg.factor*radius*((j+1)/cfg.levels);
+	  g.selectAll(".levels")
+	   .data([1]) //dummy data
+	   .enter()
+	   .append("svg:text")
+	   .attr("x", function(d){return levelFactor*(1-cfg.factor*Math.sin(0));})
+	   .attr("y", function(d){return levelFactor*(1-cfg.factor*Math.cos(0));})
+	   .attr("class", "legend")
+	   //.style("font-family", "sans-serif")
+	   .style("font-size", "10px")
+	   .attr("transform", "translate(" + (cfg.w/2-levelFactor + cfg.ToRight) + ", " + (cfg.h/2-levelFactor) + ")")
+	   .attr("fill", "#737373")
+	   .text(Format((j+1)*cfg.maxValue/cfg.levels));
+	}
+	/*for(var j=0; j<cfg.levels; j++){    //Left Axis
+	  var levelFactor = cfg.factor*radius*((j+1)/cfg.levels);
+	  g.selectAll(".levels")
+	   .data([1]) //dummy data
+	   .enter()
+	   .append("svg:text")
+	   .attr("x", function(d){return levelFactor*(1-cfg.factor*Math.sin(90));})
+	   .attr("y", function(d){return levelFactor*(1-cfg.factor*Math.cos(90));})
+	   .attr("class", "legend")
+	   //.style("font-family", "sans-serif")
+	   .style("font-size", "10px")
+	   .attr("transform", "translate(" + (cfg.w/2-levelFactor + cfg.ToRight) + ", " + (cfg.h/2-levelFactor) + ")")
+	   .attr("fill", "#737373")
+	   .text(Format((j+1)*cfg.maxValue/cfg.levels));
+	}
+  for(var j=0; j<cfg.levels; j++){     //Right Axis
+	  var levelFactor = cfg.factor*radius*((j+1)/cfg.levels);
+	  g.selectAll(".levels")
+	   .data([1]) //dummy data
+	   .enter()
+	   .append("svg:text")
+	   .attr("x", function(d){return levelFactor*(1-cfg.factor*Math.sin(-90));})
+	   .attr("y", function(d){return levelFactor*(1-cfg.factor*Math.cos(90));})
+	   .attr("class", "legend")
+	   //.style("font-family", "sans-serif")
+	   .style("font-size", "10px")
+	   .attr("transform", "translate(" + (cfg.w/2-levelFactor + cfg.ToRight) + ", " + (cfg.h/2-levelFactor) + ")")
+	   .attr("fill", "#737373")
+	   .text(Format((j+1)*cfg.maxValue/cfg.levels));
+	}*/
+  
+	series = 0;
+
+	var axis = g.selectAll(".axis")
+			.data(allAxis)
+			.enter()
+			.append("g")
+			.attr("class", "axis");
+
+	axis.append("line")
+		.attr("x1", cfg.w/2)
+		.attr("y1", cfg.h/2)
+		.attr("x2", function(d, i){return cfg.w/2*(1-cfg.factor*Math.sin(i*cfg.radians/total));})
+		.attr("y2", function(d, i){return cfg.h/2*(1-cfg.factor*Math.cos(i*cfg.radians/total));})
+		.attr("class", "line")
+		.style("stroke", "grey")
+		.style("stroke-width", "1px");
+
+	axis.append("text")
+		.attr("class", "legend")
+		.text(function(d){return d})
+		//.style("font-family", "sans-serif")
+		.style("font-size", "11px")
+		.attr("text-anchor", "middle")
+		.attr("dy", "1.5em")
+		.attr("transform", function(d, i){return "translate(0, -10)"})
+		.attr("x", function(d, i){return cfg.w/2*(1-cfg.factorLegend*Math.sin(i*cfg.radians/total))-60*Math.sin(i*cfg.radians/total);})
+		.attr("y", function(d, i){return cfg.h/2*(1-Math.cos(i*cfg.radians/total))-20*Math.cos(i*cfg.radians/total);});
+
+ 
+	d.forEach(function(y, x){
+	  dataValues = [];
+	  g.selectAll(".nodes")
+		.data(y, function(j, i){
+		  dataValues.push([
+			cfg.w/2*(1-(parseFloat(Math.max(j.value, 0))/cfg.maxValue)*cfg.factor*Math.sin(i*cfg.radians/total)), 
+			cfg.h/2*(1-(parseFloat(Math.max(j.value, 0))/cfg.maxValue)*cfg.factor*Math.cos(i*cfg.radians/total))
+		  ]);
+		});
+	  dataValues.push(dataValues[0]);
+	  g.selectAll(".area")
+					 .data([dataValues])
+					 .enter()
+					 .append("polygon")
+					 .attr("class", "radar-chart-serie"+series)
+					 .style("stroke-width", "2px")
+					 .style("stroke", cfg.color(series))
+					 .attr("points",function(d) {
+						 var str="";
+						 for(var pti=0;pti<d.length;pti++){
+							 str=str+d[pti][0]+","+d[pti][1]+" ";
+						 }
+						 return str;
+					  })
+					 .style("fill", function(j, i){return cfg.color(series)})
+					 .style("fill-opacity", cfg.opacityArea)
+					 .on('mouseover', function (d){
+										z = "polygon."+d3.select(this).attr("class");
+										g.selectAll("polygon")
+										 .transition(200)
+										 .style("fill-opacity", 0.1); 
+										g.selectAll(z)
+										 .transition(200)
+										 .style("fill-opacity", .7);
+									  })
+					 .on('mouseout', function(){
+										g.selectAll("polygon")
+										 .transition(200)
+										 .style("fill-opacity", cfg.opacityArea);
+					 });
+	  series++;
+	});
+	series=0;
+
+
+	d.forEach(function(y, x){
+	  g.selectAll(".nodes")
+		.data(y).enter()
+		.append("svg:circle")
+		.attr("class", "radar-chart-serie"+series)
+		.attr('r', cfg.radius)
+		.attr("alt", function(j){return Math.max(j.value, 0)})
+		.attr("cx", function(j, i){
+		  dataValues.push([
+			cfg.w/2*(1-(parseFloat(Math.max(j.value, 0))/cfg.maxValue)*cfg.factor*Math.sin(i*cfg.radians/total)), 
+			cfg.h/2*(1-(parseFloat(Math.max(j.value, 0))/cfg.maxValue)*cfg.factor*Math.cos(i*cfg.radians/total))
+		]);
+		return cfg.w/2*(1-(Math.max(j.value, 0)/cfg.maxValue)*cfg.factor*Math.sin(i*cfg.radians/total));
+		})
+		.attr("cy", function(j, i){
+		  return cfg.h/2*(1-(Math.max(j.value, 0)/cfg.maxValue)*cfg.factor*Math.cos(i*cfg.radians/total));
+		})
+		.attr("data-id", function(j){return j.axis})
+		.style("fill", cfg.color(series)).style("fill-opacity", .9)
+		.on('mouseover', function (d){
+					newX =  parseFloat(d3.select(this).attr('cx')) - 10;
+					newY =  parseFloat(d3.select(this).attr('cy')) - 5;
+			
+					tooltip
+						.attr('x', newX)
+						.attr('y', newY)
+						//.text(Format(d.value))
+						.transition(200)
+						.style('opacity', 1);
+						
+					z = "polygon."+d3.select(this).attr("class");
+					g.selectAll("polygon")
+						.transition(200)
+						.style("fill-opacity", 0.1); 
+					g.selectAll(z)
+						.transition(200)
+						.style("fill-opacity", .7);
+				  })
+		.on('mouseout', function(){
+					tooltip
+						.transition(200)
+						.style('opacity', 0);
+					g.selectAll("polygon")
+						.transition(200)
+						.style("fill-opacity", cfg.opacityArea);
+				  })
+		.append("svg:title")
+		.text(function(j){return Math.max(j.value, 0)});
+
+	  series++;
+	});
+	//Tooltip
+	tooltip = g.append('text')
+			   .style('opacity', 0)
+			   //.style('font-family', 'sans-serif')
+			   .style('font-size', '13px');
+  }
+
+
+
+function genRadarChart(id,  options) {
+
+  data1=radar_data();
+  
+
+  var w = 500,
+	h = 500;
+
+  var colorscale = d3.scaleOrdinal(d3.schemeCategory10);
+
+
+  //Legend titles
+  //var LegendOptions = ['Smartphone','Tablet'];
+  var LegendOptions = country_list;
+
+
+  //Options for the Radar chart, other than default
+  var mycfg = {
+    w: w,
+    h: h,
+    maxValue: 0.6,
+    levels: 6,
+    ExtraWidthX: 300
+  }
+
+  //Call function to draw the Radar chart
+
+
+  RadarChart("#radarChart", data1, mycfg);
+
+  ////////////////////////////////////////////
+  /////////// Initiate legend ////////////////
+  ////////////////////////////////////////////
+
+  var svg = d3.select('#body')
+    .selectAll('svg')
+    .append('svg')
+    .attr("width", w+300)
+    .attr("height", h)
+
+  //Create the title for the legend
+  var text = svg.append("text")
+    .attr("class", "title")
+    .attr('transform', 'translate(170,20)') 
+    .attr("x", w - 70)
+    .attr("y", 10)
+    .attr("font-size", "12px")
+    .attr("fill", "#404040")
+    .text("Country:");
+      
+  //Initiate Legend	
+  var legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("height", 100)
+    .attr("width", 200)
+    .attr('transform', 'translate(170,40)') 
+    ;
+    //Create colour squares
+    legend.selectAll('rect')
+      .data(LegendOptions)
+      .enter()
+      .append("rect")
+      .attr("x", w - 65)
+      .attr("y", function(d, i){ return i * 20;})
+      .attr("width", 10)
+      .attr("height", 10)
+      .style("fill", function(d, i){ return colorscale(i);})
+      ;
+    //Create text next to squares
+    legend.selectAll('text')
+      .data(LegendOptions)
+      .enter()
+      .append("text")
+      .attr("x", w - 52)
+      .attr("y", function(d, i){ return i * 20 + 9;})
+      .attr("font-size", "11px")
+      .attr("fill", "#737373")
+      .text(function(d) { return d; });	
+
+  
+}
+
+
+
+
+
+
+
+
+
+
+function handleMouseOver(event, d){
+  
+  tooltip.transition()
+         .duration(200)
+         .style("opacity", .9)
+         
+  
+  tooltip.html(d.name+"<br/>" + Y_axis + ": " + getVar(d.name, Y_axis) +"<br/>" + X_axis + ": " + getVar(d.name, X_axis))
+  .style("left", (event.pageX) + "px")
+  .style("top", (event.pageY - 28) + "px")
+  
+
+ /* scatterPlot = d3.select("div#scatterPlot").select("svg");
+	
+	scatterPlot
+    .selectAll("circle")
+    .filter(function (b) {
+      if(d.properties.name == b.name){
+        return b;
+      }
+    })
+    .style("fill", "red"); */
+
+}
+
+function handleMouseLeave(event, d){
+
+  tooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
+    
+
+
+  d3.select("div#scatterPlot")
+  .select("svg")
+  .selectAll("circle")
+  .style("fill", "steelblue")
+}
+
+
+
+
+function handleMouseOverBarChart(event, d){
+  
+  tooltip.transition()
+         .duration(200)
+         .style("opacity", .9)
+         
+  
+  tooltip.html(d.name+"<br/>" + Y_axis + ": " + getVar(d.name, Y_axis))
+  .style("left", (event.pageX) + "px")
+  .style("top", (event.pageY - 28) + "px")
+  
+
+}
+
+
+
+
+
+
+
+function dataChange(value) {
+
+switch (value)  {
+  case "Criminality":
+    category = "Criminality"
+    Y_axis = "Criminality"
+    colorScale = d3.scaleThreshold()
+      .domain([0, 100, 500, 1000, 3500])
+      .range(d3.schemeReds[5]);
+      legend_items=["0", "100", "500", "1000", "3500","6000"]
+      break;
+  case "Education":
+    category = "Education"
+    Y_axis = "Education"
+    colorScale = d3.scaleThreshold()
+      .domain([0, 0.7, 0.8, 0.85, 0.95])
+      .range(d3.schemeBlues[5]);
+      legend_items=["0", "0.7", "0.8", "0.85", "0.95","1.0"]
+      break;
+case "Income":
+  category = "Income"
+  Y_axis = "Income"
+  colorScale = d3.scaleThreshold()
+    .domain([0, 0.5, 0.7, 0.9, 1])
+    .range(d3.schemeGreens[5]);
+    legend_items=["0", "0.5", "0.7", "0.8", "0.9","1.0"]
+  break;
+  default:
+  break;
+
+}
+document.getElementById('optionsY').value=category;
+gen_geo_map2();
+createScatterPlot(true);
+createBarChart(true);
+createLineChart(true);
+genRadialLineChart();
+genRadarChart();
+
+
+
+}
+
+
+
+
+function axisChangeX(value) {
+ 
+  switch (value)  {
+    case "Criminality":
+      X_axis = "Criminality"
+      break;
+    case "Education":
+      X_axis = "Education"
+      break;
+    case "Income":
+      X_axis = "Income"
+      break;
+    case "Time":
+      //X_axis = "pop2"
+      //createLineChart()
+      d3.select("div#scatterPlot").select("svg").remove();
+      createLineChart(false);
+      return
+      break;
+    default:  
+    break;
+      
+  }
+  if (d3.select("div#scatterPlot").select("svg").empty()){    // If last selected was the lineChart
+    
+    d3.select("div#lineChart").select("svg").remove();
+    createScatterPlot(false);
+    return
+  }
+  createScatterPlot(true);
+
+}
+
+
+function axisChangeY(value) {
+ 
+ switch (value)  {
+   case "Criminality":
+     Y_axis = "Criminality"
+     category = "Criminality"
+     colorScale = d3.scaleThreshold()
+      .domain([0, 100, 500, 1000, 3500])
+      .range(d3.schemeReds[5]);
+      legend_items=["0", "100", "500", "1000", "3500","6000"]
+     break;
+   case "Education":
+     Y_axis = "Education"
+     category = "Education"
+     colorScale = d3.scaleThreshold()
+      .domain([0, 0.7, 0.8, 0.85, 0.95])
+      .range(d3.schemeBlues[5]);
+      legend_items=["0", "0.7", "0.8", "0.85", "0.95","1.0"]
+     break;
+   case "Income":
+     Y_axis = "Income"
+     category = "Income"
+     colorScale = d3.scaleThreshold()
+    .domain([0, 0.5, 0.7, 0.9, 1])
+    .range(d3.schemeGreens[5]);
+    legend_items=["0", "0.5", "0.7", "0.8", "0.9","1.0"]
+     break;
+   default:  
+   break;
+     
+ }
+ createScatterPlot(true);
+ createBarChart(true);
+ createLineChart(true);
+ genRadialLineChart();
+ genRadarChart();
+ gen_geo_map2();
+
+}
+
+
+
+function change_country_list(value) {
+
+      switch (value)  {
+        case "Reset":
+				if(country_list.length==0){
+					break;
+				}else
+				
+			    for( i = 0; i < country_list.length+1 ; i++ ){
+				    mouseClick(null,null,country_list[0]);
+			    }
+				//mouseClick(null,null,country_list[0]);
+				
+				d3.selectAll(".Country")
+				  .transition()
+				  .duration(200)
+				  .style("opacity", 1)
+				  .style("stroke", "transparent")
+				  
+			  break;
+        case "Select all":
+				prev_selected_countries=country_list
+			    country_list = []
+			    all_countries=fill_countries()
+				
+			    for( j = 0; j < all_countries.length ; j++ ){
+				    mouseClick(null,null,all_countries[j]);
+			    }
+				for( j = 0; j < prev_selected_countries.length ; j++ ){
+				    mouseClick(null,null,prev_selected_countries[j]);
+					country_list.push(prev_selected_countries[j])
+			    }
+				d3.selectAll(".Country")
+				  .transition()
+				  .duration(200)
+				  .style("stroke-width","2")
+				  .style("stroke", "black")
+			  break;
+		
+	    default:
+		  break;
+          
+      }
+	  
+	  createScatterPlot(true);
+    createBarChart(true);
+    createLineChart(true);
+    genRadialLineChart();
+    genRadarChart();
+	   
+    
+
+}
+
+
+function highlightBrushedCircles(event,d) {
+  
+  if (event.selection != null) {
+      // revert circles to initial style
+      circles.attr("class", "non_brushed");
+
+      var brush_coords = d3.brushSelection(this);
+
+      // style brushed circles
+      test = circles.filter(function (){
+
+                var cx = d3.select(this).attr("cx"),
+                    cy = d3.select(this).attr("cy");
+
+                return isBrushed(brush_coords, cx, cy);
+            })
+            .attr("class", "brushed")
+            
+  }
+}
+
+
+function selectBrushedCircles(event,d) {
+
+  // disregard brushes w/o selections  
+  // ref: http://bl.ocks.org/mbostock/6232537
+  if (!event.selection) return;
+  
+  // programmed clearing of brush after mouse-up
+  // ref: https://github.com/d3/d3-brush/issues/10
+  d3.select(this).call(brush.move, null);
+
+  var d_brushed =  d3.selectAll(".brushed").data();
+  if (d_brushed.length == 0) return;
+ 
+
+
+  for( i = 0; i < country_list.length+1 ; i++ ){
+    mouseClick(null,null,country_list[0]);
+  }        
+
+  d3.selectAll(".Country")
+				  .transition()
+				  .duration(200)
+				  .style("opacity", 1)
+				  .style("stroke", "transparent")
+
+  for( j = 0; j < d_brushed.length ; j++ ){
+    mouseClick(null,null,d_brushed[j].name);
+  }
+  d3.selectAll(".Country")
+          .filter((d) => {
+            return country_list.includes(d.properties.name);
+          })
+				  .transition()
+				  .duration(200)
+				  .style("opacity", 1)
+				  .style("stroke-width","2")
+				  .style("stroke", "black")  
+  
+    createScatterPlot(true);
+    createBarChart(true);
+    genRadarChart();
+}
+
+
+
+
+
+function isBrushed(brush_coords, cx, cy) {
+
+  var x0 = brush_coords[0][0],
+      x1 = brush_coords[1][0],
+      y0 = brush_coords[0][1],
+      y1 = brush_coords[1][1];
+
+  return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+}
+
+
+var zoom = d3.zoom()
+      .scaleExtent([.5, 20])  
+      .extent([[0, 0], [width, height]])
+      .on("zoom", zoomed);
+
+      
+
+
+
+
+function zoomed2({transform}){
+  d3.select("div#scatterPlot")
+  .selectAll('svg')
+  .selectAll('circle')
+  .attr("transform", transform)
+}
+
+function zoomed({transform}) {
+
+/*
+    // recover the new scale
+    var newX = d3.event.transform.rescaleX(x);
+    var newY = d3.event.transform.rescaleY(y);
+
+    // update axes with these new boundaries
+    xAxis.call(d3.axisBottom(newX))
+    yAxis.call(d3.axisLeft(newY))
+
+    //d3.select("g.scatterXAxis").call(xAxis);
+    //d3.select("g.scatterYAxis").call(yAxis);
+
+
+    // update circle position
+    scatter
+      .selectAll("circle")
+      .attr('cx', function(d) {return newX(d.Sepal_Length)})
+      .attr('cy', function(d) {return newY(d.Petal_Length)});
+  
+
+
+
+
+
+
+
+
+
+
+    d3.select("g.scatterXAxis").call(xAxis, zx);
+    d3.select("g.scatterYAxis").call(yAxis, zy);
+    d3.select("g.scatterGrid").call(grid, zx, zy); */
+  }
+
+
+
+
+   // Range
+   var sliderRange = d3
+    .sliderBottom()
+    .min(2012)
+    .max(2017)
+    .width(300)
+    .tickFormat(d3.format('d'))
+    .ticks(6)
+    .step(1)
+    .default([2012, 2017])
+    .fill('#2196f3')
+    .on('onchange', val => {
+      d3.select('p#value-range').text(val.map(d3.format('d')).join('-'));
+      createLineChart(true);
+      genRadialLineChart();
+    });
+
+  var gRange = d3
+    .select('div#slider-range')
+    .append('svg')
+    .attr('width', 500)
+    .attr('height', 75)
+    .append('g')
+    .attr('transform', 'translate(30,30)');
+
+  gRange.call(sliderRange);
+
+
+  d3.select('p#value-range').text(
+    sliderRange
+      .value()
+      .map(d3.format('d'))
+      .join('-')
+  );
+
+
+
+
+function subcategory_data(data_aux){
+  
+  console.log(years)
+
+  crime_subcat=[]
+  edu_subcat=[]
+  inc_subcat=[]
+
+  for (var i = 0; i < 5; i++) crime_subcat[i] = 0;
+  for (var i = 0; i < 4; i++) edu_subcat[i] = 0;
+  for (var i = 0; i < 8; i++) inc_subcat[i] = 0;
+  console.log(category)
+  console.log(years.length)
+  switch (category)  {
+    
+        case "Criminality": //RETIRAR ESTE SWITCH CASO TENHAMOS A MEDIA DE CADA SUBCAT AO LONGO DOS ANOS
+        for(key in data_aux){
+            for(i=0;i<years.length;i++){
+              
+              if(key.includes(years[i]+"Theft",0)){ 
+                crime_subcat[0]+=parseFloat(data_aux[key])
+              }
+              else if(key.includes(years[i]+"Homcide",0)){ 
+                crime_subcat[1]+=parseFloat(data_aux[key])
+              }
+              else if(key.includes(years[i]+"Assault",0)){ 
+                crime_subcat[2]+=parseFloat(data_aux[key])
+              }
+              else if(key.includes(years[i]+"Rape",0)){ 
+                crime_subcat[3]+=parseFloat(data_aux[key])
+              }
+              else if(key.includes(years[i]+"Sexualassault",0)){ 
+                crime_subcat[4]+=parseFloat(data_aux[key])
+              }
+            }
+        
+        
+    
+          
+         
+        }
+        for(i=0;crime_subcat.length;i++){
+          crime_subcat[i]=crime_subcat[i]/years.length
+        }
+        console.log("aqui")
+        console.log(crime_subcat)
+				break;
+        case "Education":
+        for(key in data_aux){
+
+         
+          for(i=0;i<years.length;i++){
+            if(key.includes(years[i]+"ED0-2",0)){ 
+              edu_subcat[0]+=parseFloat(data_aux[key])
+            }
+            
+            else if(key.includes(years[i]+"ED3-8",0)){ 
+              edu_subcat[1]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"ED3_4",0)){ 
+              edu_subcat[2]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"ED5-8",0)){ 
+              edu_subcat[3]+=parseFloat(data_aux[key])
+            }
+          }
+          
+        }
+        console.log(edu_subcat)
+        break;
+        case "Income":
+        for(key in data_aux){
+          for(i=0;i<years.length;i++){
+            if(key.includes(years[i]+"Emp",0)){ 
+                inc_subcat[0]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Inac",0)){ 
+              inc_subcat[1]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Nemp",0)){ 
+              inc_subcat[2]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Nsal",0)){ 
+              inc_subcat[3]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Pop",0)){ 
+              inc_subcat[4]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Ret",0)){ 
+              inc_subcat[5]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Sal",0)){ 
+              inc_subcat[6]+=parseFloat(data_aux[key])
+            }
+            else if(key.includes(years[i]+"Une",0)){ 
+              inc_subcat[7]+=parseFloat(data_aux[key])
+            }
+          }
+        }
+        break;
+
+				default:
+			  break;
+          }
+
+        }
+
+function radialline(nr_subcategory,data_aux){
+  subcategory_data(data_aux)
+}
+function genRadialLineChart(){
+  console.log(dataset[1])
+  data_aux=dataset[1] /////////////// em vez de 1 deve ser o indice do pais que se quer representar (clicar no dropdown->lista de paises->selecionar um pais)
+  console.log(category)
+  switch (category)  {
+        case "Criminality":
+          nr_aux=5
+          radialline(category,data_aux)
+
+				break;
+        case "Education":
+          nr_aux=4
+          radialline(category,data_aux)
+        break;
+        case "Income":
+          nr_aux=8
+          radialline(category,data_aux)
+        break;
+
+				default:
+			  break;
+  }
+
+  var data = [
+    {angle: 0, radius: 0},
+    {angle: 0, radius: 20}]
+  var data1=[
+    {angle: Math.PI*0.5, radius: 0},
+    {angle: Math.PI*0.5, radius: 20}]
+  var lineRadial = d3.lineRadial()
+    .angle((d) => d.angle)
+    .radius((d) => d.radius);
+            
+  d3.select("#demo2")
+    .select("g")
+    .append("path")
+    .attr("d", lineRadial(data))
+    .attr("fill", "none")
+    .attr("stroke", "black");
+  d3.select("#demo2")
+    .select("g")
+    .append("path")
+    .attr("d", lineRadial(data1))
+    .attr("fill", "none")
+    .attr("stroke", "black");
+
+}
+
+
+
+
+</script>
